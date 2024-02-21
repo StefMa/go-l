@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Vergol</title>
+    </head>
+    <body>
+        <table>
+            {{ range $board := .CurrentGameBoard }}
+            <tr>
+                {{ range . }}
+                <td>{{ . }}</td>
+                {{ end }}
+            </tr>
+            {{ end }}
+        </table>
+        <footer>
+            <a href="/">Start over</a>
+            <a href="/next?state={{ .NextGameStateInBase64 }}">Next</a>
+        </footer>
+    </body>
+</html>
