@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/base64"
-	"encoding/json"
+	"encoding/binary"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -42,22 +42,28 @@ func StartHandler(response http.ResponseWriter, request *http.Request) {
 }
 
 func newGameStateInBase64ForStart(gameOfLife *gol.GameOfLife) string {
-	gameBoardJson, _ := json.Marshal(gameOfLife.GameBoard)
-	compressedJson, err := compressStringForStart(string(gameBoardJson))
-	if err != nil {
-		return string(gameBoardJson)
+	buf := new(bytes.Buffer)
+	for _, row := range gameOfLife.GameBoard {
+		for _, cell := range row {
+			binary.Write(buf, binary.LittleEndian, int32(cell.Point.X))
+			binary.Write(buf, binary.LittleEndian, int32(cell.Point.Y))
+			binary.Write(buf, binary.LittleEndian, int8(cell.State))
+		}
 	}
-	base64Encoded := base64.StdEncoding.EncodeToString([]byte(compressedJson))
+	compressed, err := compressStringForStart(buf.Bytes())
+	if err != nil {
+		panic("compressing failed")
+	}
+	base64Encoded := base64.StdEncoding.EncodeToString([]byte(compressed))
 	urlEncoded := url.QueryEscape(base64Encoded)
 	return urlEncoded
 }
 
-func compressStringForStart(input string) (string, error) {
+func compressStringForStart(input []byte) (string, error) {
 	var in bytes.Buffer
-	b := []byte(input)
 
 	w := zlib.NewWriter(&in)
-	_, err := w.Write(b)
+	_, err := w.Write(input)
 	if err != nil {
 		return "", err
 	}
@@ -66,6 +72,5 @@ func compressStringForStart(input string) (string, error) {
 		return "", err
 	}
 
-	x := string(in.Bytes())
-	return x, nil
+	return string(in.Bytes()), nil
 }

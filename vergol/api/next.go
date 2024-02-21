@@ -5,7 +5,7 @@ import (
 	"compress/zlib"
 	_ "embed"
 	"encoding/base64"
-	"encoding/json"
+	"encoding/binary"
 	"html/template"
 	"io"
 	"net/http"
@@ -37,11 +37,9 @@ func NextHandler(response http.ResponseWriter, request *http.Request) {
 		http.Error(response, "state must be a valid game board", http.StatusBadRequest)
 		return
 	}
-
-	var gameBoard [][]gol.Cell
-	err = json.Unmarshal(stateDecoded, &gameBoard)
+	gameBoard, err := bytesToGameBoard(stateDecoded)
 	if err != nil {
-		http.Error(response, "state must be a valid game board", http.StatusBadRequest)
+		http.Error(response, "can't convert bytes to game board", http.StatusBadRequest)
 		return
 	}
 	gameOfLife := gol.NewGameOfLifeWithGenerator(
@@ -97,20 +95,26 @@ type NextHtmlData struct {
 }
 
 func newGameStateInBase64ForNext(gameOfLife *gol.GameOfLife) string {
-	gameBoardJson, _ := json.Marshal(gameOfLife.GameBoard)
-	compressedJson, err := compressStringForNext(string(gameBoardJson))
+	buf := new(bytes.Buffer)
+	for _, row := range gameOfLife.GameBoard {
+		for _, cell := range row {
+			binary.Write(buf, binary.LittleEndian, int32(cell.Point.X))
+			binary.Write(buf, binary.LittleEndian, int32(cell.Point.Y))
+			binary.Write(buf, binary.LittleEndian, int8(cell.State))
+		}
+	}
+	compressedJson, err := compressStringForNext(buf.Bytes())
 	if err != nil {
-		return string(gameBoardJson)
+		panic("compressing failed")
 	}
 	return base64.StdEncoding.EncodeToString([]byte(compressedJson))
 }
 
-func compressStringForNext(input string) (string, error) {
+func compressStringForNext(input []byte) (string, error) {
 	var in bytes.Buffer
-	b := []byte(input)
 
 	w := zlib.NewWriter(&in)
-	_, err := w.Write(b)
+	_, err := w.Write(input)
 	if err != nil {
 		return "", err
 	}
@@ -138,4 +142,33 @@ func decompressStringForNext(input []byte) ([]byte, error) {
 	}
 
 	return decompressed, nil
+}
+
+func bytesToGameBoard(data []byte) ([][]gol.Cell, error) {
+	buf := bytes.NewReader(data)
+	var gameBoard [][]gol.Cell
+	for {
+		var x, y int32
+		var state int8
+		err := binary.Read(buf, binary.LittleEndian, &x)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		err = binary.Read(buf, binary.LittleEndian, &y)
+		if err != nil {
+			return nil, err
+		}
+		err = binary.Read(buf, binary.LittleEndian, &state)
+		if err != nil {
+			return nil, err
+		}
+		cell := gol.Cell{Point: gol.Point{X: int(x), Y: int(y)}, State: gol.CellState(state)}
+		if int(y) >= len(gameBoard) {
+			gameBoard = append(gameBoard, []gol.Cell{})
+		}
+		gameBoard[y] = append(gameBoard[y], cell)
+	}
+	return gameBoard, nil
 }
