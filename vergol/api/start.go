@@ -18,24 +18,18 @@ func StartHandler(response http.ResponseWriter, request *http.Request) {
 		http.Error(response, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	rows := request.Form["rows"]
-	cols := request.Form["cols"]
-	if len(rows) == 0 || len(cols) == 0 {
-		http.Error(response, "rows and cols are required", http.StatusBadRequest)
+	size := request.Form["size"]
+	if len(size) == 0 {
+		http.Error(response, "size is required", http.StatusBadRequest)
 		return
 	}
-	rowsInt, err := strconv.Atoi(rows[0])
+	sizeInt, err := strconv.Atoi(size[0])
 	if err != nil {
-		http.Error(response, "rows must be an integer", http.StatusBadRequest)
-		return
-	}
-	colsInt, err := strconv.Atoi(cols[0])
-	if err != nil {
-		http.Error(response, "cols must be an integer", http.StatusBadRequest)
+		http.Error(response, "size must be an integer", http.StatusBadRequest)
 		return
 	}
 
-	gameOfLife := gol.NewGameOfLife(gol.Width(rowsInt), gol.Height(colsInt))
+	gameOfLife := gol.NewGameOfLife(gol.Size(sizeInt))
 	gameStateInBase64 := newGameStateInBase64ForStart(gameOfLife)
 
 	http.Redirect(response, request, "/next?state="+gameStateInBase64, http.StatusFound)

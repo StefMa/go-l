@@ -43,8 +43,7 @@ func NextHandler(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 	gameOfLife := gol.NewGameOfLifeWithGenerator(
-		gol.Width(len(gameBoard[0])),
-		gol.Height(len(gameBoard)),
+		gol.Size(len(gameBoard[0])),
 		func(x, y int) gol.Cell { return gameBoard[y][x] },
 	)
 	currentGameBoard := gameBoard
