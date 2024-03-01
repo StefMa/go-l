@@ -6,25 +6,23 @@ import (
 )
 
 type GameOfLife struct {
-	Width     Width
-	Height    Height
+	Size      Size
 	GameBoard [][]Cell
 }
 
-type Width int
-type Height int
+type Size int
 
 type CellGenerator func(x int, y int) Cell
 
-func NewGameOfLife(width Width, height Height) *GameOfLife {
-	return NewGameOfLifeWithGenerator(width, height, defaultCellGenerator)
+func NewGameOfLife(size Size) *GameOfLife {
+	return NewGameOfLifeWithGenerator(size, defaultCellGenerator)
 }
 
-func NewGameOfLifeWithGenerator(width Width, height Height, cellGenerator CellGenerator) *GameOfLife {
+func NewGameOfLifeWithGenerator(size Size, cellGenerator CellGenerator) *GameOfLife {
 	var gameBoard [][]Cell
-	for y := 0; y < int(height); y++ {
+	for y := 0; y < int(size); y++ {
 		var rowCells []Cell
-		for x := 0; x < int(width); x++ {
+		for x := 0; x < int(size); x++ {
 			cell := cellGenerator(x, y)
 			rowCells = append(rowCells, cell)
 		}
@@ -32,17 +30,16 @@ func NewGameOfLifeWithGenerator(width Width, height Height, cellGenerator CellGe
 	}
 
 	return &GameOfLife{
-		Width:     width,
-		Height:    height,
+		Size:      size,
 		GameBoard: gameBoard,
 	}
 }
 
 func (gol *GameOfLife) Next() {
 	var newGameBoard [][]Cell
-	for y := 0; y < int(gol.Height); y++ {
+	for y := 0; y < int(gol.Size); y++ {
 		var rowCells []Cell
-		for x := 0; x < int(gol.Width); x++ {
+		for x := 0; x < int(gol.Size); x++ {
 			cell := gol.GameBoard[y][x]
 			neighbors := gol.getNeighbors(cell)
 			newState := cell.State
@@ -108,7 +105,7 @@ func (gol *GameOfLife) getNeighbors(cell Cell) []Cell {
 }
 
 func (gol *GameOfLife) isPointOutOfBounds(neighborX int, neighborY int) bool {
-	return neighborX < 0 || neighborX >= int(gol.Width) || neighborY < 0 || neighborY >= int(gol.Height)
+	return neighborX < 0 || neighborX >= int(gol.Size) || neighborY < 0 || neighborY >= int(gol.Size)
 }
 
 func isCurrentCell(current Cell, possibleNeighbor Cell) bool {

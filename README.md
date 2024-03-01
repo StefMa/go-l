@@ -6,20 +6,19 @@ A demo can be found at **https://vergol.vercel.app**.
 
 ## How to use
 
-**1.** First you need to create a new instance of the `GameOfLife` structure and put a `Height` and a `Width` into it to describe the dimensions of the game:
+**1.** First you need to create a new instance of the `GameOfLife` structure and put a `Size` into it to describe the dimensions of the game:
 ```go
 gol "github.com/stefma/go-l"
 
 func main() {
-  gameOfLife := gol.NewGameOfLife(gol.Width(10), gol.Height(10))
+  gameOfLife := gol.NewGameOfLife(gol.Size(10))
 }
 ```
 
 **1.1** Additionally, you can use a custom `generator` function to create the game `Cell`s yourself:
 ```go
 gameOfLife := gol.NewGameOfLifeWithGenerator(
-		gol.Width(10),
-		gol.Height(10),
+		gol.Size(10),
 		func(x, y int) gol.Cell { /* Custom logic here */ },
 )
 ```

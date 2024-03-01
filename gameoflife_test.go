@@ -5,14 +5,10 @@ import (
 )
 
 func TestNewGameOfLife(t *testing.T) {
-	game := NewGameOfLife(3, 3)
+	game := NewGameOfLife(3)
 
-	if game.Width != 3 {
+	if game.Size != 3 {
 		t.Errorf("Expected game to have a width of 3")
-	}
-
-	if game.Height != 3 {
-		t.Errorf("Expected game to have a height of 3")
 	}
 
 	if len(game.GameBoard) != 3 {
@@ -42,7 +38,7 @@ func TestNewGameOfLife(t *testing.T) {
 }
 
 func TestGameOfLife_GetNeighbors(t *testing.T) {
-	game := NewGameOfLife(3, 3)
+	game := NewGameOfLife(3)
 
 	neighbors := game.getNeighbors(game.GameBoard[1][1])
 
@@ -63,7 +59,7 @@ func TestGameOfLife_GetNeighbors(t *testing.T) {
 }
 
 func TestNewGameOfLifeWithGenerator(t *testing.T) {
-	game := NewGameOfLifeWithGenerator(3, 3, func(x int, y int) Cell {
+	game := NewGameOfLifeWithGenerator(3, func(x int, y int) Cell {
 		return Cell{
 			State: Life,
 		}
@@ -86,7 +82,7 @@ func TestGameOfLife_Next_3By3(t *testing.T) {
 	 * 0 1 1
 	 * 0 0 1
 	 */
-	game := NewGameOfLifeWithGenerator(3, 3, func(x int, y int) Cell {
+	game := NewGameOfLifeWithGenerator(3, func(x int, y int) Cell {
 		state := Dead
 		if x == 1 && y == 1 || x == 2 && y == 1 ||
 			x == 2 && y == 2 {
@@ -135,7 +131,7 @@ func TestGameOfLife_Next_TwoTimes_3By3(t *testing.T) {
 	 * 0 1 0
 	 * 0 0 0
 	 */
-	game := NewGameOfLifeWithGenerator(3, 3, func(x int, y int) Cell {
+	game := NewGameOfLifeWithGenerator(3, func(x int, y int) Cell {
 		state := Dead
 		if x == 0 && y == 0 || x == 2 && y == 0 ||
 			x == 1 && y == 1 {
@@ -215,7 +211,7 @@ func TestGameOfLife_Next_5By5(t *testing.T) {
 	 * 0 1 0 0 1
 	 * 0 0 1 0 0
 	 */
-	game := NewGameOfLifeWithGenerator(5, 5, func(x int, y int) Cell {
+	game := NewGameOfLifeWithGenerator(5, func(x int, y int) Cell {
 		state := Dead
 		if x == 1 && y == 0 || x == 3 && y == 0 ||
 			x == 1 && y == 1 || x == 3 && y == 1 ||
