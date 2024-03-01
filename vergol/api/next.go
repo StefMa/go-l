@@ -95,11 +95,13 @@ type NextHtmlData struct {
 
 func newGameStateInBase64ForNext(gameOfLife *gol.GameOfLife) string {
 	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, int32(gameOfLife.Size))
 	for _, row := range gameOfLife.GameBoard {
 		for _, cell := range row {
-			binary.Write(buf, binary.LittleEndian, int32(cell.Point.X))
-			binary.Write(buf, binary.LittleEndian, int32(cell.Point.Y))
-			binary.Write(buf, binary.LittleEndian, int8(cell.State))
+			if cell.State == gol.Life {
+				binary.Write(buf, binary.LittleEndian, int32(cell.Point.X))
+				binary.Write(buf, binary.LittleEndian, int32(cell.Point.Y))
+			}
 		}
 	}
 	compressedJson, err := compressStringForNext(buf.Bytes())
@@ -145,10 +147,16 @@ func decompressStringForNext(input []byte) ([]byte, error) {
 
 func bytesToGameBoard(data []byte) ([][]gol.Cell, error) {
 	buf := bytes.NewReader(data)
-	var gameBoard [][]gol.Cell
+
+	var size int32
+	err := binary.Read(buf, binary.LittleEndian, &size)
+	if err != nil {
+		return nil, err
+	}
+
+	var lifeCells []gol.Cell
 	for {
 		var x, y int32
-		var state int8
 		err := binary.Read(buf, binary.LittleEndian, &x)
 		if err == io.EOF {
 			break
@@ -159,15 +167,31 @@ func bytesToGameBoard(data []byte) ([][]gol.Cell, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = binary.Read(buf, binary.LittleEndian, &state)
-		if err != nil {
-			return nil, err
-		}
-		cell := gol.Cell{Point: gol.Point{X: int(x), Y: int(y)}, State: gol.CellState(state)}
-		if int(y) >= len(gameBoard) {
-			gameBoard = append(gameBoard, []gol.Cell{})
-		}
-		gameBoard[y] = append(gameBoard[y], cell)
+		cell := gol.Cell{Point: gol.Point{X: int(x), Y: int(y)}, State: gol.Life}
+		lifeCells = append(lifeCells, cell)
 	}
+
+	var gameBoard [][]gol.Cell
+	for y := 0; y < int(size); y++ {
+		var rowCells []gol.Cell
+		for x := 0; x < int(size); x++ {
+			cell := gol.Cell{
+				Point: gol.Point{
+					X: x,
+					Y: y,
+				},
+				State: gol.Dead,
+			}
+			for _, lifeCell := range lifeCells {
+				if lifeCell.Point.X == x && lifeCell.Point.Y == y {
+					cell = lifeCell
+					break
+				}
+			}
+			rowCells = append(rowCells, cell)
+		}
+		gameBoard = append(gameBoard, rowCells)
+	}
+
 	return gameBoard, nil
 }

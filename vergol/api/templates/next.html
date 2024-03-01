@@ -9,9 +9,7 @@
         <table>
             {{ range $board := .CurrentGameBoard }}
             <tr>
-                {{ range . }}
-                <td>{{ . }}</td>
-                {{ end }}
+                {{ range . }}<td>{{ . }}</td>{{ end }}
             </tr>
             {{ end }}
         </table>

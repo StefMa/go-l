@@ -37,11 +37,13 @@ func StartHandler(response http.ResponseWriter, request *http.Request) {
 
 func newGameStateInBase64ForStart(gameOfLife *gol.GameOfLife) string {
 	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, int32(gameOfLife.Size))
 	for _, row := range gameOfLife.GameBoard {
 		for _, cell := range row {
-			binary.Write(buf, binary.LittleEndian, int32(cell.Point.X))
-			binary.Write(buf, binary.LittleEndian, int32(cell.Point.Y))
-			binary.Write(buf, binary.LittleEndian, int8(cell.State))
+			if cell.State == gol.Life {
+				binary.Write(buf, binary.LittleEndian, int32(cell.Point.X))
+				binary.Write(buf, binary.LittleEndian, int32(cell.Point.Y))
+			}
 		}
 	}
 	compressed, err := compressStringForStart(buf.Bytes())
